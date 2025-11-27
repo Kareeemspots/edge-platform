@@ -104,6 +104,16 @@ export function BookingModal({
     }
   }, [open, supabase])
 
+  const formatPrice = (value: number | string | null | undefined) => {
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+      return `€${value.toLocaleString('de-DE')}`
+    }
+    if (typeof value === 'string' && value.trim().length) {
+      return value
+    }
+    return 'Preis auf Anfrage'
+  }
+
   const handleBooking = async () => {
     if (!organizerId || !designer || !selectedPackage) {
       toast.error('Missing booking details.')
@@ -149,9 +159,9 @@ export function BookingModal({
         event_id: eventIdToUse,
         designer_id: designer.id,
         designer_name: designer.name,
-        package_tier: selectedPackage.tier,
-        package_description: selectedPackage.description,
-        price_display: selectedPackage.price,
+        package_tier: selectedPackage.tier ?? 'Custom',
+        package_description: selectedPackage.description ?? '',
+        price_display: formatPrice(selectedPackage.price),
         status: 'pending',
       }
 
@@ -194,9 +204,11 @@ export function BookingModal({
         <div className="mt-6 rounded-3xl border border-white/40 bg-white/60 p-6 shadow-inner">
           <p className="text-sm font-medium text-slate-500">Paket-Gesamtpreis</p>
           <p className="mt-2 text-4xl font-semibold text-slate-900">
-            {selectedPackage.price}
+            {formatPrice(selectedPackage.price)}
           </p>
-          <p className="mt-2 text-sm text-slate-500">{selectedPackage.description}</p>
+          <p className="mt-2 text-sm text-slate-500">
+            {selectedPackage.description ?? 'Individuelles Angebot'}
+          </p>
         </div>
 
         <div className="mt-6 space-y-3">

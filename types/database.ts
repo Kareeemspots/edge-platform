@@ -82,6 +82,35 @@ export interface Database {
           persona?: string | null
         }
       }
+      service_packages: {
+        Row: {
+          id: string
+          designer_id: string
+          tier: string | null
+          price: number | null
+          turnaround: string | null
+          description: string | null
+          created_at?: string
+        }
+        Insert: {
+          id?: string
+          designer_id: string
+          tier?: string | null
+          price?: number | null
+          turnaround?: string | null
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          designer_id?: string
+          tier?: string | null
+          price?: number | null
+          turnaround?: string | null
+          description?: string | null
+          created_at?: string
+        }
+      }
     }
   }
 }

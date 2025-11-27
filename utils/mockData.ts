@@ -1,25 +1,10 @@
-'use client'
+import type { DesignerWithData } from '@/components/DesignerCard'
+import type { Database } from '@/types/database'
 
 export type DesignerDiscipline = 'Motion' | '3D' | 'Static' | 'Branding'
 
-export type DesignerPackage = {
-  tier: 'Basic' | 'Standard' | 'Premium'
-  price: string
-  turnaround: string
-  description: string
-}
-
-export type DesignerProfile = {
-  id: string
-  name: string
-  studio: string
-  avatar: string
-  rating: number
-  discipline: DesignerDiscipline
-  location: string
-  packages: DesignerPackage[]
-  portfolio: string[]
-}
+type Asset = Database['public']['Tables']['assets']['Row']
+export type DesignerPackage = Database['public']['Tables']['service_packages']['Row']
 
 const STUDIO_NAMES = [
   'Neon Studio',
@@ -70,47 +55,80 @@ const DISCIPLINES: DesignerDiscipline[] = ['Motion', '3D', 'Static', 'Branding']
 const randomFrom = <T,>(items: T[]): T =>
   items[Math.floor(Math.random() * items.length)]
 
-const buildPackages = (): DesignerPackage[] => [
+const buildAssets = (designerId: string): Asset[] => {
+  const shuffled = [...PORTFOLIO_STILLS].sort(() => 0.5 - Math.random())
+
+  return shuffled.slice(0, 3).map((imageUrl, index) => ({
+    id: `${designerId}-asset-${index}`,
+    title: `Portfolio Asset ${index + 1}`,
+    file_url: imageUrl,
+    thumbnail_url: imageUrl,
+    file_type: 'image/jpeg',
+    width: null,
+    height: null,
+    uploader_id: designerId,
+    location_name: null,
+    location_logo_url: null,
+    dj_name: null,
+    smart_links: null,
+    hex_color: '#0f172a',
+  }))
+}
+
+const buildPackages = (designerId: string): DesignerPackage[] => [
   {
+    id: `${designerId}-pkg-basic`,
+    designer_id: designerId,
     tier: 'Basic',
-    price: `${Math.floor(Math.random() * 400 + 400)}€`,
+    price: Math.floor(Math.random() * 400 + 400),
     turnaround: `${Math.floor(Math.random() * 3 + 3)} Tage`,
     description: '1 Key Visual + 2 Revisionen',
+    created_at: new Date().toISOString(),
   },
   {
+    id: `${designerId}-pkg-standard`,
+    designer_id: designerId,
     tier: 'Standard',
-    price: `${Math.floor(Math.random() * 500 + 900)}€`,
+    price: Math.floor(Math.random() * 500 + 900),
     turnaround: `${Math.floor(Math.random() * 4 + 5)} Tage`,
     description: 'Loop-Motion + Social Kit',
+    created_at: new Date().toISOString(),
   },
   {
+    id: `${designerId}-pkg-premium`,
+    designer_id: designerId,
     tier: 'Premium',
-    price: `${Math.floor(Math.random() * 800 + 1400)}€`,
+    price: Math.floor(Math.random() * 800 + 1400),
     turnaround: `${Math.floor(Math.random() * 4 + 7)} Tage`,
     description: 'Aftermovie + Full Brand System',
+    created_at: new Date().toISOString(),
   },
 ]
 
-const buildPortfolio = (): string[] => {
-  const shuffled = [...PORTFOLIO_STILLS].sort(() => 0.5 - Math.random())
-  return shuffled.slice(0, 3)
+export type MockDesigner = DesignerWithData & {
+  name: string
+  studio: string
+  discipline: DesignerDiscipline
+  location: string
+  rating: number
 }
 
-export const generateMockDesigners = (count = 8): DesignerProfile[] => {
-  return Array.from({ length: count }).map((_, index) => {
-    const name = STUDIO_NAMES[(index + 3) % STUDIO_NAMES.length]
+export const generateMockDesigners = (count = 8): MockDesigner[] =>
+  Array.from({ length: count }).map((_, index) => {
+    const id = `mock-${index}`
+    const studioName = STUDIO_NAMES[(index + 3) % STUDIO_NAMES.length]
+
     return {
-      id: `mock-${index}`,
-      name,
-      studio: name,
-      avatar: randomFrom(PLACEHOLDER_AVATARS),
+      id,
+      name: studioName,
+      studio: studioName,
+      username: studioName,
+      avatar_url: randomFrom(PLACEHOLDER_AVATARS),
       rating: Number((Math.random() * 0.7 + 4.2).toFixed(1)),
       discipline: randomFrom(DISCIPLINES),
       location: randomFrom(LOCATIONS),
-      packages: buildPackages(),
-      portfolio: buildPortfolio(),
+      assets: buildAssets(id),
+      packages: buildPackages(id),
     }
   })
-}
-
 

@@ -10,11 +10,14 @@ import { createClient } from '@/utils/supabase/client'
 import {
   DesignerDiscipline,
   DesignerPackage,
-  DesignerProfile,
   generateMockDesigners,
+  type MockDesigner,
 } from '@/utils/mockData'
+import type { Database } from '@/types/database'
 
-type MarketplaceDesigner = DesignerProfile & {
+type Asset = Database['public']['Tables']['assets']['Row']
+
+type MarketplaceDesigner = MockDesigner & {
   color?: string | null
 }
 
@@ -51,31 +54,30 @@ export default function OrganizerMarketplacePage() {
         profiles.map(async (profile) => {
           const { data: assets, error: assetsError } = await supabase
             .from('assets')
-            .select('id, thumbnail_url, file_url, hex_color')
+            .select(
+              'id, title, file_url, thumbnail_url, file_type, width, height, uploader_id, location_name, location_logo_url, dj_name, smart_links, hex_color'
+            )
             .eq('uploader_id', profile.id)
             .order('created_at', { ascending: false })
-            .limit(3)
+            .limit(5)
 
           if (assetsError) throw assetsError
 
           const mockFallback = generateMockDesigners(1)[0]
 
-          const portfolio =
-            assets?.map((asset) => asset.thumbnail_url || asset.file_url) ??
-            mockFallback.portfolio
-
           return {
             id: profile.id,
             name: profile.username || mockFallback.name,
             studio: profile.username || mockFallback.studio,
-            avatar: profile.avatar_url || mockFallback.avatar,
+            username: profile.username || mockFallback.username,
+            avatar_url: profile.avatar_url || mockFallback.avatar_url,
             rating: Number((Math.random() * 0.6 + 4.3).toFixed(1)),
             discipline:
               (profile.persona as DesignerDiscipline) ??
               filters[Math.floor(Math.random() * filters.length)],
             location: 'Remote · EU',
+            assets: ensureAssets((assets as Asset[] | null) ?? null, mockFallback.assets),
             packages: mockFallback.packages,
-            portfolio: ensurePortfolio(portfolio),
             color: assets?.[0]?.hex_color ?? '#0f172a',
           } satisfies MarketplaceDesigner
         })
@@ -178,7 +180,7 @@ export default function OrganizerMarketplacePage() {
             <DesignerCard
               key={designer.id}
               designer={designer}
-              onBook={(d, pkg) => handleOpenBooking(d, pkg)}
+              onBook={(d, pkg) => handleOpenBooking(d as MarketplaceDesigner, pkg)}
             />
           ))}
         </div>
@@ -186,7 +188,16 @@ export default function OrganizerMarketplacePage() {
 
       <BookingModal
         open={isBookingModalOpen}
-        designer={bookingDesigner}
+        designer={
+          bookingDesigner
+            ? {
+                id: bookingDesigner.id,
+                name: bookingDesigner.name,
+                studio: bookingDesigner.studio,
+                discipline: bookingDesigner.discipline,
+              }
+            : null
+        }
         selectedPackage={bookingPackage}
         onClose={handleCloseBooking}
       />
@@ -194,11 +205,9 @@ export default function OrganizerMarketplacePage() {
   )
 }
 
-const ensurePortfolio = (portfolio: string[]): string[] => {
-  const withFallback = [...portfolio]
-  while (withFallback.length < 3) {
-    const fallback = generateMockDesigners(1)[0].portfolio[0]
-    withFallback.push(fallback)
+const ensureAssets = (assets: Asset[] | null, fallback: Asset[]): Asset[] => {
+  if (assets && assets.length) {
+    return assets
   }
-  return withFallback.slice(0, 3)
+  return fallback
 }

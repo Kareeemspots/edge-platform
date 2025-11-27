@@ -1,32 +1,41 @@
+'use client'
+
 import { useRef } from 'react'
 import Image from 'next/image'
 import { Star, MapPin } from 'lucide-react'
+
 import { Database } from '@/types/database'
 
 type Asset = Database['public']['Tables']['assets']['Row']
-type ServicePackage = Database['public']['Tables']['service_packages']['Row']
+type DesignerPackage = Database['public']['Tables']['service_packages']['Row']
 
-interface DesignerWithData {
+export interface DesignerWithData {
   id: string
   username: string | null
   avatar_url: string | null
   assets: Asset[]
-  packages: ServicePackage[]
-  rating?: number // Mock property
-  location?: string // Mock property
+  packages: DesignerPackage[]
+  name?: string | null
+  studio?: string | null
+  discipline?: string | null
+  rating?: number
+  location?: string | null
 }
 
 interface DesignerCardProps {
   designer: DesignerWithData
+  onBook?: (designer: DesignerWithData, pkg: DesignerPackage) => void
 }
 
-export default function DesignerCard({ designer }: DesignerCardProps) {
+export default function DesignerCard({ designer, onBook }: DesignerCardProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // FIX: Wir erzwingen hier die Umwandlung in eine Zahl mit || 0 Fallback
-  const minPrice = designer.packages?.length 
-    ? Math.min(...designer.packages.map((pkg) => Number(pkg.price || 0))) 
+  const packages = designer.packages ?? []
+  const minPrice = packages.length
+    ? Math.min(...packages.map((pkg) => Number(pkg.price || 0)))
     : 0
+
+  const assets = designer.assets?.length ? designer.assets : []
 
   const handlePrevSlide = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -50,7 +59,7 @@ export default function DesignerCard({ designer }: DesignerCardProps) {
           ref={scrollRef}
           className="flex h-full w-full snap-x snap-mandatory overflow-x-auto scrollbar-hide"
         >
-          {designer.assets.slice(0, 5).map((asset) => (
+          {assets.slice(0, 5).map((asset) => (
             <div key={asset.id} className="relative h-full w-full flex-shrink-0 snap-center">
               <Image
                 src={asset.thumbnail_url || asset.file_url}
@@ -61,7 +70,7 @@ export default function DesignerCard({ designer }: DesignerCardProps) {
               />
             </div>
           ))}
-          {designer.assets.length === 0 && (
+          {assets.length === 0 && (
             <div className="flex h-full w-full items-center justify-center text-slate-400">
               No media
             </div>
@@ -98,7 +107,7 @@ export default function DesignerCard({ designer }: DesignerCardProps) {
             </div>
             <div>
               <h3 className="text-base font-semibold text-slate-900 leading-tight">
-                {designer.username || 'Unnamed Studio'}
+                {designer.username || designer.name || 'Unnamed Studio'}
               </h3>
               <div className="flex items-center gap-1 text-xs text-slate-500">
                 <MapPin size={12} />
@@ -117,7 +126,15 @@ export default function DesignerCard({ designer }: DesignerCardProps) {
             <span className="text-[10px] uppercase tracking-wider text-slate-400">Starting at</span>
             <span className="text-lg font-bold text-slate-900">€{minPrice}</span>
           </div>
-          <button className="rounded-full bg-slate-900 px-5 py-2 text-xs font-bold text-white transition hover:bg-slate-800">
+          <button
+            className="rounded-full bg-slate-900 px-5 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+            onClick={(event) => {
+              event.stopPropagation()
+              if (onBook && packages.length) {
+                onBook(designer, packages[0])
+              }
+            }}
+          >
             Book Now
           </button>
         </div>
