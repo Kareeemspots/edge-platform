@@ -14,7 +14,7 @@ export default function DesignerCard({ designer, onBook }: DesignerCardProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const minPrice = Math.min(...designer.packages.map((pkg) => Number(pkg.price)))
+  const minPrice = Math.min(...designer.packages.map((pkg) => Number(pkg.price || 0)))
 
   const handlePrevSlide = (e: React.MouseEvent) => {
     e.stopPropagation()
